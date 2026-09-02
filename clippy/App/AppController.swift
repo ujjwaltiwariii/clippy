@@ -26,6 +26,8 @@ final class AppController: NSObject, NSApplicationDelegate {
     private var previouslyFrontmostApp: NSRunningApplication?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        requestAccessibilityPermissionIfNeeded()
+
         do {
             let database = try Database(fileURL: AppConstants.databaseURL)
             let repository = ClipboardRepository(database: database)
@@ -43,6 +45,14 @@ final class AppController: NSObject, NSApplicationDelegate {
         setupStatusItem()
         setupGlobalHotKey()
         observeRecentItemsForMenu()
+    }
+
+    /// Triggers the system Accessibility prompt the first time Clippy runs,
+    /// so auto-paste can work without the user having to dig through
+    /// Settings first. Safe to call every launch: once granted, macOS
+    /// won't prompt again.
+    private func requestAccessibilityPermissionIfNeeded() {
+        PasteSimulator.isAccessibilityTrusted(prompt: true)
     }
 
     // MARK: - Status item

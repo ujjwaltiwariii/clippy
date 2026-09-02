@@ -11,6 +11,9 @@ struct ClipboardItemRow: View {
     let isSelected: Bool
     let quickIndex: Int?
     let imageProvider: (ClipboardItem) -> Data?
+    var onDelete: () -> Void = {}
+
+    @State private var isHovering = false
 
     var body: some View {
         HStack(spacing: 12) {
@@ -36,7 +39,15 @@ struct ClipboardItemRow: View {
 
             Spacer(minLength: 8)
 
-            if let quickIndex, quickIndex < 9 {
+            if isHovering {
+                Button(action: onDelete) {
+                    Image(systemName: "trash")
+                        .font(.system(size: 12))
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(isSelected ? .white : .secondary)
+                .help("Delete (⌘⌫)")
+            } else if let quickIndex, quickIndex < 9 {
                 Text("⌘\(quickIndex + 1)")
                     .font(.system(size: 11, weight: .medium, design: .monospaced))
                     .foregroundStyle(.tertiary)
@@ -49,6 +60,7 @@ struct ClipboardItemRow: View {
                 .fill(isSelected ? Color.accentColor.opacity(0.85) : Color.clear)
         }
         .contentShape(Rectangle())
+        .onHover { isHovering = $0 }
     }
 
     private var displayTitle: String {

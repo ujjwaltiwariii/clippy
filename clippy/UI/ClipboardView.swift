@@ -34,6 +34,8 @@ struct ClipboardView: View {
                 listContent
                 Divider()
                 ClipboardPreview(item: selectedItem, imageProvider: clipboardService.imageData)
+                Divider()
+                shortcutHints
             }
         }
         .background(.regularMaterial)
@@ -86,7 +88,8 @@ struct ClipboardView: View {
                                 ClipboardItemRow(item: item,
                                                   isSelected: item.id == selectedID,
                                                   quickIndex: flatIndex,
-                                                  imageProvider: clipboardService.imageData)
+                                                  imageProvider: clipboardService.imageData,
+                                                  onDelete: { clipboardService.delete(item) })
                                     .id(item.id)
                                     .onTapGesture { selectedID = item.id; onSelect(item) }
                                     .contextMenu { contextMenu(for: item) }
@@ -126,6 +129,31 @@ struct ClipboardView: View {
             Spacer()
         }
         .frame(maxWidth: .infinity, minHeight: 300)
+    }
+
+    private var shortcutHints: some View {
+        HStack(spacing: 14) {
+            shortcutHint(symbol: "return", label: "Paste")
+            shortcutHint(symbol: "pin", label: "Pin", modifier: "⌘")
+            shortcutHint(symbol: "delete.left", label: "Delete", modifier: "⌘")
+            Spacer()
+            shortcutHint(symbol: "escape", label: "Close")
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+        .font(.system(size: 11))
+        .foregroundStyle(.secondary)
+    }
+
+    private func shortcutHint(symbol: String, label: String, modifier: String? = nil) -> some View {
+        HStack(spacing: 4) {
+            if let modifier {
+                Text(modifier)
+                    .font(.system(size: 11, weight: .medium, design: .monospaced))
+            }
+            Image(systemName: symbol)
+            Text(label)
+        }
     }
 
     @ViewBuilder
@@ -188,7 +216,10 @@ struct ClipboardView: View {
         case 126: moveSelection(by: -1); return true // Up
         case 36, 76: selectHighlighted(); return true // Return / keypad enter
         case 53: onDismiss(); return true // Escape
-        case 51 where flags == .command: // Cmd+Delete
+        case 51 where flags == .command: // Cmd+Delete (Backspace)
+            if let item = selectedItem { clipboardService.delete(item) }
+            return true
+        case 117: // The dedicated Forward Delete key needs no modifier
             if let item = selectedItem { clipboardService.delete(item) }
             return true
         default: break
